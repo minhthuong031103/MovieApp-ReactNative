@@ -1,8 +1,20 @@
-import {View, Text, TextInput, Image, ScrollView, FlatList} from 'react-native';
-import React from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  Image,
+  ScrollView,
+  FlatList,
+  StyleSheet,
+  StatusBar,
+  Dimensions,
+} from 'react-native';
+import React, {useEffect} from 'react';
 import {COLORS} from '../theme/theme';
 import {MySvg} from '../assets/MySvg';
-
+import {baseImagePath, nowPlayingMovies} from '../api/apicalls';
+import MovieCard from '../components/MovieCard';
+const {width} = Dimensions.get('window');
 const data = [
   {
     id: 1,
@@ -33,13 +45,25 @@ const FilmItem = () => {
     </View>
   );
 };
+const styles = StyleSheet.create({
+  container: {flex: 1, backgroundColor: COLORS.Black},
+});
 
+//asyncronus
 export default function HomeScreen() {
+  const [nowPlaying, setNowPlaying] = React.useState([]);
+  useEffect(() => {
+    (async () => {
+      const options = {method: 'GET', headers: {accept: 'application/json'}};
+      const results = await fetch(nowPlayingMovies, options);
+      const data = await results.json();
+      setNowPlaying(data.results);
+    })();
+  }, []);
   return (
-    <ScrollView style={{flex: 1}} showsVerticalScrollIndicator={false}>
-      <View
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      {/* <View
         style={{
-          backgroundColor: '#FFFFFF',
           flex: 1,
           paddingTop: 29,
           paddingHorizontal: 29,
@@ -77,7 +101,7 @@ export default function HomeScreen() {
           <Text>8.0 (1,024)</Text>
         </View>
         <View style={{alignItems: 'center', marginTop: 10}}>
-          <Text>John Wick: Chapter 4</Text>
+          <Text>{nowPlaying[0].title}</Text>
         </View>
 
         <View style={{flexDirection: 'row', justifyContent: 'center', gap: 15}}>
@@ -103,7 +127,52 @@ export default function HomeScreen() {
             />
           </View>
         </View>
-      </View>
+      </View> */}
+
+      <StatusBar hidden />
+      {/* 
+      <View style={styles.InputHeaderContainer}>
+        <InputHeader searchFunction={searchMoviesFunction} />
+      </View> */}
+      {/* 
+      <CategoryHeader title={'Now Playing'} /> */}
+      <Text>now playing</Text>
+      <FlatList
+        data={nowPlaying}
+        keyExtractor={(item: any) => item.id}
+        bounces={false}
+        snapToInterval={width * 0.7 + 36}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        decelerationRate={0}
+        contentContainerStyle={{gap: 36}}
+        renderItem={({item, index}) => {
+          if (!item.original_title) {
+            return (
+              <View
+                style={{
+                  width: (width - (width * 0.7 + 36 * 2)) / 2,
+                }}></View>
+            );
+          }
+          return (
+            <MovieCard
+              shoudlMarginatedAtEnd={true}
+              cardFunction={() => {
+                // navigation.push('MovieDetails', {movieid: item.id});
+              }}
+              cardWidth={width * 0.7}
+              isFirst={index == 0 ? true : false}
+              // isLast={index == upcomingMoviesList?.length - 1 ? true : false}
+              title={item.original_title}
+              imagePath={baseImagePath('w780', item.poster_path)}
+              genre={item.genre_ids.slice(1, 4)}
+              vote_average={item.vote_average}
+              vote_count={item.vote_count}
+            />
+          );
+        }}
+      />
     </ScrollView>
   );
 }
